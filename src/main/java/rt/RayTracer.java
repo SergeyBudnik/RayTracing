@@ -19,6 +19,10 @@ import java.io.File;
 import java.io.IOException;
 
 public class RayTracer {
+    public static enum LightingModel {
+        PHONG, BLINN_PHONG
+    }
+
     private class RayTracerRunnable implements Runnable {
         private int sw, sh;
         private int startRow;
@@ -163,10 +167,11 @@ public class RayTracer {
                 double fadeFactor = ls.getFadingFactor(closestIO.getClosestIO().pos);
 
                 addDiffuseComponent(c, rToLs, fadeFactor, ls, closestIO);
+                addSpecularComponent(c, r, ls, closestIO);
+            }
 
-                if (depth < traceDepth) {
-                    addSpecularComponent(c, r, ls, closestIO, depth, closestSceneObject, fadeFactor);
-                }
+            if (depth < traceDepth) {
+                addReflectionComponent(c, r, closestIO, closestSceneObject, depth + 1);
             }
         }
 
@@ -183,30 +188,56 @@ public class RayTracer {
 
         double cos = Math.abs(Vector.cos(closestIO.getClosestIO().normal, rToLs.dir));
 
-        c.r += cos * closestIO.getClosestIO().material.diffuse.r * ls.color.r * fadingFactor;
-        c.g += cos * closestIO.getClosestIO().material.diffuse.g * ls.color.g * fadingFactor;
-        c.b += cos * closestIO.getClosestIO().material.diffuse.b * ls.color.b * fadingFactor;
+        c.r += cos * closestIO.getClosestIO().material.diffuse.r * ls.ambientColor.r * fadingFactor;
+        c.g += cos * closestIO.getClosestIO().material.diffuse.g * ls.ambientColor.g * fadingFactor;
+        c.b += cos * closestIO.getClosestIO().material.diffuse.b * ls.ambientColor.b * fadingFactor;
     }
 
-    private void addSpecularComponent(Color c, Ray r, LightSource ls, IntersectionInfo closestIO,
-            int depth, SceneObject self, double fadeFactor) {
+    private void addSpecularComponent(Color c, Ray ray, LightSource ls, IntersectionInfo closestIO) {
+        Color color = new Color();
 
-        Vector reflected = r.dir.sub(closestIO.getClosestIO().normal.mul(2 * closestIO.getClosestIO().normal.dot(r.dir))); /* d + 2 (n, d) n */
+        color.add(closestIO.getClosestIO().material.specular);
 
-        Ray rReflected = new Ray(closestIO.getClosestIO().pos, reflected.normal());
+        Vector n = closestIO.getClosestIO().normal;
+        Vector v = new Vector(0, 0, 0).sub(ray.dir);
+        Vector l = ls.rayToLightSource(closestIO.getClosestIO().pos).dir;
 
-        Color color = getColor(rReflected, depth + 1, self);
+        double dot;
 
-        Color lsColor = new Color(ls.color.r * fadeFactor, ls.color.g * fadeFactor, ls.color.b * fadeFactor);
+        if (scene.lightingModel == LightingModel.PHONG) {
+            Vector r = n.mul(2 * n.dot(v)).sub(v).normal();
 
-        color.mul(lsColor);
-        color.mul(closestIO.getClosestIO().material.specular);
+            dot = r.dot(l);
+        } else {
+            Vector lv = l.add(v);
 
-        double rvA = Math.pow(Math.abs(r.dir.dot(rReflected.dir)), closestIO.getClosestIO().material.specularPower);
+            Vector h = lv.div(lv.len());
 
-        color.r *= rvA;
-        color.g *= rvA;
-        color.b *= rvA;
+            dot = n.dot(h);
+        }
+
+        double cosA = dot <= 0 ? 0 : Math.pow(dot, closestIO.getClosestIO().material.specularPower);
+
+        color.r *= cosA;
+        color.g *= cosA;
+        color.b *= cosA;
+
+        color.mul(ls.color);
+
+        c.add(color);
+    }
+
+    private void addReflectionComponent(Color c, Ray ray, IntersectionInfo closestIO, SceneObject self, int depth) {
+        Vector n = closestIO.getClosestIO().normal;
+        Vector v = new Vector(0, 0, 0).sub(ray.dir);
+
+        Vector r = n.mul(2 * n.dot(v)).sub(v).normal();
+
+        Color color = getColor(new Ray(closestIO.getClosestIO().pos, r), depth + 1, self);
+
+        color.r *= closestIO.getClosestIO().material.reflectionRatio;
+        color.g *= closestIO.getClosestIO().material.reflectionRatio;
+        color.b *= closestIO.getClosestIO().material.reflectionRatio;
 
         c.add(color);
     }

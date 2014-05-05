@@ -17,6 +17,14 @@ public class PointLightSource extends LightSource {
         this.fadeExponent = fadeExponent;
     }
 
+    public PointLightSource(Vector pos, Color color, Color ambientColor, double distance, double fadeExponent) {
+        super(color, ambientColor);
+
+        this.pos = pos;
+        this.distance = distance;
+        this.fadeExponent = fadeExponent;
+    }
+
     @Override
     public Ray rayToLightSource(Vector position) {
         Vector dir = pos.sub(position).normal();

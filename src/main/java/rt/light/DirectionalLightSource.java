@@ -13,6 +13,12 @@ public class DirectionalLightSource extends LightSource {
         this.antiDir = new Vector(-dir.x, -dir.y, -dir.z);
     }
 
+    public DirectionalLightSource(Color color, Color ambientColor, Vector dir) {
+        super(color, ambientColor);
+
+        this.antiDir = new Vector(-dir.x, -dir.y, -dir.z);
+    }
+
     @Override
     public Ray rayToLightSource(Vector position) {
         return new Ray(position, antiDir);

@@ -1,28 +1,24 @@
 package rt;
 
-import js3d.loaders.ModelLoader;
-import js3d.loaders.ObjModelLoader;
-import js3d.loaders.WrongModelFileFormatException;
-
-import js3d.objects.complex.Model;
 import js3d.objects.core.SceneObject;
-import js3d.objects.primitives.Primitive;
-import js3d.objects.primitives.Triangle;
 
 import rt.light.LightSource;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 
 import java.util.*;
 
 public class Scene {
+    public static enum LightingModel {
+        PHONG, BLINN_PHONG
+    }
+
     public Collection<SceneObject> sceneObjects = new ArrayList<>();
     public Collection<LightSource> lightSources = new ArrayList<>();
     public Camera camera;
+    public RayTracer.LightingModel lightingModel;
 
-    public Scene(Camera camera) {
+    public Scene(Camera camera, RayTracer.LightingModel lightingModel) {
         this.camera = camera;
+        this.lightingModel = lightingModel;
     }
 
     public void addSceneObject(SceneObject sceneObject) {
