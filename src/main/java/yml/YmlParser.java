@@ -49,7 +49,7 @@ public class YmlParser {
 
                 HashMap orientationInfoMap = (HashMap)cameraInfoMap.get("orientation");
 
-                double h = extractNumber(orientationInfoMap, "h");
+                double h = -extractNumber(orientationInfoMap, "h");
                 double p = extractNumber(orientationInfoMap, "p");
                 double r = extractNumber(orientationInfoMap, "r");
 
@@ -193,16 +193,16 @@ public class YmlParser {
                         sz = extractNumber(lcs, "sz");
                     }
 
-                    if (lcs.containsKey("h")) {
-                        rz = Math.PI * extractNumber(lcs, "h") / 180;
-                    }
-
                     if (lcs.containsKey("p")) {
-                        rx = Math.PI * extractNumber(lcs, "p") / 180;
+                        ry = Math.PI * extractNumber(lcs, "p") / 180;
                     }
 
                     if (lcs.containsKey("r")) {
-                        ry = Math.PI * extractNumber(lcs, "r") / 180;
+                        rx = Math.PI * extractNumber(lcs, "r") / 180;
+                    }
+
+                    if (lcs.containsKey("h")) {
+                        ry = Math.PI * (extractNumber(lcs, "h") + 90) / 180;
                     }
                 } else if (ho.containsKey("cylinder")) {
                     HashMap cMap = (HashMap)ho.get("cylinder");
